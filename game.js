@@ -407,8 +407,8 @@ function draw() {
 }
 
 function update(dt) {
-  const level = Math.floor(state.score / 20);
-  const dangerSpeed = state.stepH * Math.min(3.45, (0.55 + level * 0.1) * 1.5);
+  const level = Math.floor(state.score / 10);
+  const dangerSpeed = state.stepH * (0.55 * Math.pow(1.3, level));
   state.dangerY += dangerSpeed * dt;
 
   if (state.failing) {
