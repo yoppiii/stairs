@@ -26,6 +26,13 @@ const state = {
   stepH: 0,
   currentLane: 0,
   face: "neutral",
+  bumpUntil: 0,
+  bumpDir: 0,
+  failing: false,
+  failStartedAt: 0,
+  failVelocity: 0,
+  failDir: 1,
+  failTargetX: 0,
 };
 
 bestEl.textContent = String(state.best);
@@ -99,6 +106,13 @@ function resetGame() {
   state.score = 0;
   state.running = true;
   state.face = "neutral";
+  state.bumpUntil = 0;
+  state.bumpDir = 0;
+  state.failing = false;
+  state.failStartedAt = 0;
+  state.failVelocity = 0;
+  state.failDir = 1;
+  state.failTargetX = state.player.x;
   scoreEl.textContent = "0";
 
   createInitialSteps();
@@ -124,8 +138,35 @@ function getStepAt(index) {
   return state.steps[index] || null;
 }
 
+function triggerWallBump(dir) {
+  state.bumpDir = dir;
+  state.bumpUntil = performance.now() + 220;
+}
+
+function triggerFailFall(dir) {
+  if (state.failing || !state.running) return;
+  const normalizedDir = dir === -1 ? -1 : 1;
+  let wrongLane = clampLane(state.currentLane + normalizedDir);
+  if (wrongLane === state.currentLane) {
+    wrongLane = clampLane(state.currentLane - normalizedDir);
+  }
+  state.failing = true;
+  state.face = "dead";
+  state.failStartedAt = performance.now();
+  state.failVelocity = 0;
+  state.failDir = normalizedDir;
+  state.failTargetX = laneToX(wrongLane);
+}
+
 function nextMove(dir) {
-  if (!state.running) return;
+  if (!state.running || state.failing) return;
+
+  const atLeftEdge = state.currentLane === 0 && dir === -1;
+  const atRightEdge = state.currentLane === state.laneCount - 1 && dir === 1;
+  if (atLeftEdge || atRightEdge) {
+    triggerWallBump(dir);
+    return;
+  }
 
   const nextIndex = state.score + 1;
   const next = getStepAt(nextIndex);
@@ -133,7 +174,7 @@ function nextMove(dir) {
 
   const expectedLane = clampLane(state.currentLane + dir);
   if (next.lane !== expectedLane) {
-    endGame();
+    triggerFailFall(dir);
     return;
   }
 
@@ -159,35 +200,32 @@ function nextMove(dir) {
 
 function endGame() {
   state.running = false;
+  state.failing = false;
   state.face = "dead";
   overlayTitle.textContent = "게임 오버";
   overlayText.textContent = `점수 ${state.score}점 · 다시 도전해요!`;
   startBtn.textContent = "재시작";
   overlay.classList.add("game-over");
-  // Let the dead face render briefly before showing the overlay.
-  draw();
-  setTimeout(() => {
-    overlay.classList.add("visible");
-  }, 220);
+  overlay.classList.add("visible");
 }
 
 function drawBackground(w, h) {
   const grd = ctx.createLinearGradient(0, 0, 0, h);
-  grd.addColorStop(0, "#16324f");
-  grd.addColorStop(0.7, "#0f253c");
-  grd.addColorStop(1, "#091725");
+  grd.addColorStop(0, "#d7ecff");
+  grd.addColorStop(0.65, "#b3d5f6");
+  grd.addColorStop(1, "#95bfe9");
   ctx.fillStyle = grd;
   ctx.fillRect(0, 0, w, h);
 
-  ctx.globalAlpha = 0.08;
+  ctx.globalAlpha = 0.12;
   for (let i = 0; i < 12; i += 1) {
     const y = ((i * 140) - (state.cameraY * 0.35)) % (h + 160);
-    ctx.fillStyle = "#d9e2ec";
+    ctx.fillStyle = "#f6fbff";
     ctx.fillRect(0, y - 6, w, 2);
   }
   ctx.globalAlpha = 1;
 
-  ctx.strokeStyle = "rgba(217, 226, 236, 0.12)";
+  ctx.strokeStyle = "rgba(56, 97, 143, 0.18)";
   ctx.lineWidth = 1;
   for (const laneX of state.laneXs) {
     ctx.beginPath();
@@ -248,20 +286,26 @@ function drawPlayer() {
   const h = canvas.getBoundingClientRect().height;
   const stepTopY = worldToScreenY(state.player.y, h);
   const footY = stepTopY + 1;
-  const t = performance.now() * 0.006;
-  const bob = Math.sin(t) * 1.9;
-  const tilt = Math.sin(t * 0.8) * 0.06;
+  const now = performance.now();
+  const t = now * 0.006;
+  const bob = state.failing ? 0 : Math.sin(t) * 1.9;
+  const tilt = state.failing ? 0 : Math.sin(t * 0.8) * 0.06;
+  const bumpActive = now < state.bumpUntil;
+  const bumpPhase = bumpActive ? 1 - (state.bumpUntil - now) / 220 : 0;
+  const bumpOffsetX = bumpActive ? state.bumpDir * (Math.sin(bumpPhase * Math.PI * 3) * 6) : 0;
+  const failRotProgress = state.failing ? Math.min(1, (now - state.failStartedAt) / 220) : 0;
+  const failRotation = state.failing ? Math.PI * failRotProgress * state.failDir : 0;
 
   ctx.save();
-  ctx.translate(px, footY + bob);
-  ctx.rotate(tilt);
+  ctx.translate(px + bumpOffsetX, footY + bob);
+  ctx.rotate(tilt + failRotation);
 
   const p = Math.max(2, Math.round(state.stepH * 0.1));
   const drawPx = (x, y, w, hh, color) => {
     ctx.fillStyle = color;
     ctx.fillRect(Math.round(x * p), Math.round(y * p), Math.round(w * p), Math.round(hh * p));
   };
-  const faceState = state.face;
+  const faceState = bumpActive ? "bump" : state.face;
 
   // ground contact shadow (on top surface)
   ctx.fillStyle = "rgba(0, 0, 0, 0.22)";
@@ -291,6 +335,11 @@ function drawPlayer() {
     drawPx(-3, -16, 1, 3, "#2f2a35");
     drawPx(1, -15, 3, 1, "#2f2a35");
     drawPx(2, -16, 1, 3, "#2f2a35");
+  } else if (faceState === "bump") {
+    drawPx(-3, -14, 2, 1, "#2f2a35");
+    drawPx(-2, -15, 1, 2, "#2f2a35");
+    drawPx(1, -14, 2, 1, "#2f2a35");
+    drawPx(2, -15, 1, 2, "#2f2a35");
   } else if (faceState === "smile") {
     // closed happy eyes
     drawPx(-3, -13, 2, 1, "#2f2a35");
@@ -306,6 +355,8 @@ function drawPlayer() {
     drawPx(-2, -11, 1, 1, "#2f2a35");
     drawPx(1, -11, 1, 1, "#2f2a35");
     drawPx(-1, -10, 2, 1, "#2f2a35");
+  } else if (faceState === "bump") {
+    drawPx(-2, -11, 4, 1, "#7c5057");
   } else if (faceState === "dead") {
     drawPx(-1, -11, 2, 1, "#6f6f7a");
   } else {
@@ -351,18 +402,32 @@ function draw() {
 }
 
 function update(dt) {
-  const lerp = 1 - Math.pow(0.001, dt);
-  state.player.x += (state.player.targetX - state.player.x) * lerp;
-  state.player.y += (state.player.targetY - state.player.y) * lerp;
-
   const level = Math.floor(state.score / 20);
   const dangerSpeed = state.stepH * Math.min(2.3, 0.55 + level * 0.1);
   state.dangerY += dangerSpeed * dt;
 
-  // Game over when danger reaches the top surface of the platform the player stands on.
+  if (state.failing) {
+    const gravity = state.stepH * 18;
+    state.failVelocity += gravity * dt;
+    state.player.y -= state.failVelocity * dt;
+    state.player.x += (state.failTargetX - state.player.x) * Math.min(1, dt * 10);
+
+    const playerFootWorldY = state.player.y + state.stepH;
+    if (playerFootWorldY <= state.dangerY + 1) {
+      endGame();
+    }
+    return;
+  }
+
+  const lerp = 1 - Math.pow(0.001, dt);
+  state.player.x += (state.player.targetX - state.player.x) * lerp;
+  state.player.y += (state.player.targetY - state.player.y) * lerp;
+
+  // Failure starts when danger reaches the top surface of the platform the player stands on.
   const playerPlatformTopWorldY = state.player.y + state.stepH;
   if (state.dangerY >= playerPlatformTopWorldY) {
-    endGame();
+    const outwardDir = state.currentLane < (state.laneCount - 1) / 2 ? -1 : 1;
+    triggerFailFall(outwardDir);
   }
 }
 
