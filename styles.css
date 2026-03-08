@@ -3,8 +3,7 @@
   --bg-2: #243b53;
   --panel: #f0f4f8;
   --ink: #102a43;
-  --left: #f6ad55;
-  --right: #68d391;
+  --ctrl: #9fb3c8;
   --danger: #e53e3e;
 }
 
@@ -29,33 +28,30 @@ body {
   margin: 0 auto;
   padding: calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 12px);
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto 1fr;
   gap: 12px;
 }
 
 .hud-top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
 }
 
 .hud-top h1 {
   margin: 0;
   font-size: clamp(1.2rem, 2.3vw, 1.7rem);
-}
-
-.scores {
-  display: flex;
-  gap: 14px;
-  font-size: clamp(0.95rem, 2vw, 1.1rem);
+  letter-spacing: 0.04em;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.45);
 }
 
 .game-wrap {
   position: relative;
   min-height: 0;
-  border-radius: 18px;
+  border-radius: 14px;
   overflow: hidden;
   background: #0b1f33;
+  border: 3px solid #f3c7cf;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
 }
 
@@ -65,15 +61,63 @@ body {
   display: block;
 }
 
+.score-float {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 3;
+  padding: 6px 10px;
+  border: 2px solid #f3c7cf;
+  border-radius: 7px;
+  background: rgba(11, 31, 51, 0.78);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f9e7ec;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+.best-hidden {
+  display: none;
+}
+
+.touch-zones {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.zone {
+  align-self: end;
+  justify-self: center;
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  border: 1px solid rgba(243, 199, 207, 0.5);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  color: rgba(240, 244, 248, 0.78);
+  background: rgba(10, 22, 36, 0.28);
+}
+
+.zone.left {
+  margin-right: 8px;
+}
+
+.zone.right {
+  margin-left: 8px;
+}
+
 .overlay {
   position: absolute;
   inset: 0;
   display: none;
   place-content: center;
   text-align: center;
-  padding: 20px;
-  background: rgba(3, 10, 18, 0.7);
-  backdrop-filter: blur(2px);
+  gap: 10px;
+  padding: 22px;
+  background: linear-gradient(180deg, rgba(8, 20, 36, 0.9), rgba(8, 20, 36, 0.82));
+  backdrop-filter: blur(1px);
 }
 
 .overlay.visible {
@@ -81,65 +125,56 @@ body {
 }
 
 .overlay h2 {
-  margin: 0 0 10px;
-  font-size: clamp(1.2rem, 4vw, 2rem);
+  margin: 0;
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  letter-spacing: 0.04em;
+  text-shadow: 0 3px 0 rgba(17, 32, 53, 0.8);
 }
 
 .overlay p {
-  margin: 0 0 14px;
-  opacity: 0.95;
+  margin: 0 0 6px;
+  opacity: 0.92;
+}
+
+.menu-character-wrap {
+  width: clamp(180px, 42vw, 300px);
+  height: clamp(180px, 42vw, 300px);
+  margin: 2px auto 10px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: radial-gradient(circle at 50% 42%, rgba(255, 197, 212, 0.2), rgba(8, 20, 36, 0) 64%);
+}
+
+.menu-character-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: auto;
+  filter: drop-shadow(0 12px 12px rgba(0, 0, 0, 0.4));
 }
 
 .overlay button {
-  border: 0;
-  border-radius: 999px;
-  padding: 12px 18px;
-  font-size: 1rem;
+  border: 2px solid #1f2a44;
+  border-radius: 8px;
+  padding: 14px 22px;
+  font-size: 1.15rem;
   font-weight: 700;
   color: var(--ink);
-  background: var(--panel);
+  background: #ffe0e6;
+  box-shadow: 0 5px 0 #1f2a44;
 }
 
-.controls {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.ctrl {
-  border: 0;
-  border-radius: 14px;
-  padding: 16px 10px;
-  font-size: clamp(1rem, 2.5vw, 1.2rem);
-  font-weight: 700;
-  color: #0b1f33;
-}
-
-.ctrl.left {
-  background: var(--left);
-}
-
-.ctrl.right {
-  background: var(--right);
-}
-
-.ctrl:active {
-  transform: scale(0.98);
+.overlay.game-over .menu-character-wrap {
+  display: none;
 }
 
 @media (orientation: landscape) and (min-width: 1000px) {
   .app {
     max-width: 1000px;
-    grid-template-columns: 1fr 240px;
-    grid-template-rows: auto 1fr;
   }
 
   .hud-top {
-    grid-column: 1 / -1;
-  }
-
-  .controls {
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr 1fr;
+    grid-column: auto;
   }
 }
