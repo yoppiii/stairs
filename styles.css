@@ -1,0 +1,145 @@
+:root {
+  --bg-1: #102a43;
+  --bg-2: #243b53;
+  --panel: #f0f4f8;
+  --ink: #102a43;
+  --left: #f6ad55;
+  --right: #68d391;
+  --danger: #e53e3e;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  touch-action: manipulation;
+  background: radial-gradient(circle at 20% 20%, #334e68, var(--bg-1) 55%), linear-gradient(150deg, var(--bg-2), var(--bg-1));
+  color: var(--panel);
+}
+
+.app {
+  min-height: 100dvh;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 12px);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 12px;
+}
+
+.hud-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hud-top h1 {
+  margin: 0;
+  font-size: clamp(1.2rem, 2.3vw, 1.7rem);
+}
+
+.scores {
+  display: flex;
+  gap: 14px;
+  font-size: clamp(0.95rem, 2vw, 1.1rem);
+}
+
+.game-wrap {
+  position: relative;
+  min-height: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #0b1f33;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+}
+
+#game {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+  place-content: center;
+  text-align: center;
+  padding: 20px;
+  background: rgba(3, 10, 18, 0.7);
+  backdrop-filter: blur(2px);
+}
+
+.overlay.visible {
+  display: grid;
+}
+
+.overlay h2 {
+  margin: 0 0 10px;
+  font-size: clamp(1.2rem, 4vw, 2rem);
+}
+
+.overlay p {
+  margin: 0 0 14px;
+  opacity: 0.95;
+}
+
+.overlay button {
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 18px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--panel);
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.ctrl {
+  border: 0;
+  border-radius: 14px;
+  padding: 16px 10px;
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  font-weight: 700;
+  color: #0b1f33;
+}
+
+.ctrl.left {
+  background: var(--left);
+}
+
+.ctrl.right {
+  background: var(--right);
+}
+
+.ctrl:active {
+  transform: scale(0.98);
+}
+
+@media (orientation: landscape) and (min-width: 1000px) {
+  .app {
+    max-width: 1000px;
+    grid-template-columns: 1fr 240px;
+    grid-template-rows: auto 1fr;
+  }
+
+  .hud-top {
+    grid-column: 1 / -1;
+  }
+
+  .controls {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+}

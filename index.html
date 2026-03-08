@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#102a43" />
+    <title>부기의 계단</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="hud-top">
+        <h1>부기의 계단</h1>
+        <div class="scores">
+          <span>점수 <strong id="score">0</strong></span>
+          <span>최고 <strong id="best">0</strong></span>
+        </div>
+      </header>
+
+      <section class="game-wrap">
+        <canvas id="game" width="900" height="1600" aria-label="부기의 계단 게임 화면"></canvas>
+
+        <div id="overlay" class="overlay visible">
+          <h2 id="overlay-title">탭해서 시작</h2>
+          <p id="overlay-text">왼쪽/오른쪽을 선택하며 계단을 올라가세요</p>
+          <button id="start-btn" type="button">시작</button>
+        </div>
+      </section>
+
+      <footer class="controls" aria-label="게임 조작">
+        <button id="left-btn" class="ctrl left" type="button">왼쪽</button>
+        <button id="right-btn" class="ctrl right" type="button">오른쪽</button>
+      </footer>
+    </main>
+
+    <script src="./game.js"></script>
+  </body>
+</html>
