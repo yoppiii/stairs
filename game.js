@@ -60,11 +60,14 @@ function pickNextLane(prevLane) {
 }
 
 function resizeCanvas() {
+  if (state.running) return;
   const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
   const rect = canvas.getBoundingClientRect();
   canvas.width = Math.floor(rect.width * dpr);
   canvas.height = Math.floor(rect.height * dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
 
   const w = rect.width;
   const h = rect.height;
@@ -78,10 +81,12 @@ function resizeCanvas() {
   state.stepW = Math.min(state.stepW, state.laneGap * 0.72);
   state.laneXs = Array.from({ length: state.laneCount }, (_, i) => sidePadding + state.laneGap * i);
 
-  if (!state.running) draw();
+  draw();
 }
 
-window.addEventListener("resize", resizeCanvas);
+window.addEventListener("resize", () => {
+  if (!state.running) resizeCanvas();
+});
 
 function createInitialSteps() {
   state.steps = [];
@@ -403,7 +408,7 @@ function draw() {
 
 function update(dt) {
   const level = Math.floor(state.score / 20);
-  const dangerSpeed = state.stepH * Math.min(2.3, 0.55 + level * 0.1);
+  const dangerSpeed = state.stepH * Math.min(3.45, (0.55 + level * 0.1) * 1.5);
   state.dangerY += dangerSpeed * dt;
 
   if (state.failing) {
